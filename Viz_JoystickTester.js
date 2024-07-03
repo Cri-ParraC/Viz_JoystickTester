@@ -1,15 +1,14 @@
 //=============================================================================
-// Viz_JoystickTester.js [MZ] (v1.0.0)
+// Viz_JoystickTester.js [MZ] (v1.0.1)
 //=============================================================================
 
 /*:
  * @target MZ
- * @plugindesc [MZ] (v1.0.0) Registra en consola la actividad del mando o mandos.
+ * @plugindesc [MZ] (v1.0.1) Registra en consola la actividad del mando o mandos.
  * @author Vizcacha
- * @version 1.0.0
  * @url https://github.com/Cri-ParraC/Viz_JoystickTester
- * @help Viz_JoystickTester.js [MZ] (v1.0.0)
- * 
+ * @help Viz_JoystickTester.js [MZ] (v1.0.1)
+ * ----------------------------------------------------------------------------
  * Plugin para RPG Maker MZ que registra en consola la actividad del mando o 
  * mandos conectados.
  *
@@ -26,7 +25,11 @@
 
 (() => {
   "use strict";
-  console.info("Viz_JoystickTester.js [MZ] (v1.0.0) activado");
+
+  console.info("Viz_JoystickTester.js [MZ] (v1.0.1)");
+
+  window.Imported ||= {};
+  Imported.Viz_JoystickTester = 1.0;
 
   const gamepadButtons = {
     0: "A",
@@ -55,38 +58,74 @@
     3: "RSY",
   };
 
+  const pressedButtons = new Set();
+  const pressedAxes = new Set();
+
   function handleButtons(buttons, gamepadInfo) {
-    for (let i = 0; i < buttons.length; i++) {
-      if (buttons[i].value > 0) {
-        console.info(`${gamepadInfo} Input: ${gamepadButtons[i]} Code: ${i}`);
+    buttons.forEach((button, index) => {
+      if (button.value > 0) {
+        if (!pressedButtons.has(index)) {
+          pressedButtons.add(index);
+          console.info(`${gamepadInfo} Input: ${gamepadButtons[index]} Code: ${index}`);
+        }
+      } else {
+        pressedButtons.delete(index);
       }
-    }
+    });
   }
 
   function handleSticks(axes, gamepadInfo) {
-    for (let i = 0; i < axes.length; i++) {
-      if (i === 0 || i === 2) {
-        if (axes[i] < - 0.5) {
-          console.info(`${gamepadInfo} Input: ${gamepadAxes[i]} ←`);
-        } else if (axes[i] > 0.5) {
-          console.info(`${gamepadInfo} Input: ${gamepadAxes[i]} →`);
-        }
-      }
-      if (i === 1 || i === 3) {
-        if (axes[i] < - 0.5) {
-          console.info(`${gamepadInfo} Input: ${gamepadAxes[i]} ↑`);
-        } else if (axes[i] > 0.5) {
-          console.info(`${gamepadInfo} Input: ${gamepadAxes[i]} ↓`);
-        }
-      }
-    }
-  }
+    axes.forEach((axis, index) => {
+      const negativeKey = `axis-${index}-negative`;
+      const positiveKey = `axis-${index}-positive`;
 
+      if (index === 0 || index === 2) {
+        if (axis < - 0.5) {
+          if (!pressedAxes.has(negativeKey)) {
+            pressedAxes.add(negativeKey);
+            console.info(`${gamepadInfo} Input: ${gamepadAxes[index]} ←`);
+          }
+        }
+        else {
+          pressedAxes.delete(negativeKey);
+        }
+        if (axis > 0.5) {
+          if (!pressedAxes.has(positiveKey)) {
+            pressedAxes.add(positiveKey);
+            console.info(`${gamepadInfo} Input: ${gamepadAxes[index]} →`);
+          }
+        }
+        else {
+          pressedAxes.delete(positiveKey);
+        }
+      }
+
+      if (index === 1 || index === 3) {
+        if (axis < - 0.5) {
+          if (!pressedAxes.has(negativeKey)) {
+            pressedAxes.add(negativeKey);
+            console.info(`${gamepadInfo} Input: ${gamepadAxes[index]} ↑`);
+          }
+        }
+        else {
+          pressedAxes.delete(negativeKey);
+        }
+        if (axis > 0.5) {
+          if (!pressedAxes.has(positiveKey)) {
+            pressedAxes.add(positiveKey);
+            console.info(`${gamepadInfo} Input: ${gamepadAxes[index]} ↓`);
+          }
+        } else {
+          pressedAxes.delete(positiveKey);
+        }
+      }
+    });
+  }
 
   function startGameLoop(index) {
     const gameLoop = () => {
       const gamepad = navigator.getGamepads()[index];
-      if (gamepad === null) {
+      if (!gamepad) {
         return;
       }
       const gamepadInfo = `${gamepad.id} Index: ${gamepad.index}`;
